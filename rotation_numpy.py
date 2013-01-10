@@ -15,7 +15,7 @@ def decide1(v1,v2,v3):
     return v4 / numpy.linalg.norm(v4)
 
 
-def decide2(v1,v2)
+def decide2(v1,v2):
     d = v1+v2
     d /= numpy.linalg.norm(d)
     v = numpy.cross(v1,v2)
