@@ -1,0 +1,49 @@
+#!/usr/bin/env perl
+#pick multiple elements
+
+if ( $#ARGV <= 0 ){
+    print <<EOD;
+Usage : $0 [-o offset(0)] interval \@ID1 [\@ID2 \@ID3 ...]
+EOD
+    die;
+}
+$interval=shift;
+if ($interval eq "-o"){
+  $skip=shift;
+  $interval = shift;
+}
+$tag=shift;
+$cnt=-$skip;
+while(<STDIN>){
+    chomp;
+  skip:
+    if ( $tag eq $_ ){
+	if(($cnt>=0) && ($cnt%$interval)==0){
+#	    print STDERR "[$cnt]";
+	    print "$_\n";
+	    $_=rest(@ARGV);
+	    $cnt++;
+	    goto skip;
+	}
+	$cnt++;
+    }
+}
+
+sub rest{
+    local(@tags)=@_;
+    $out=1;
+    while(<STDIN>){
+	chomp;
+	if(/^@/){
+	    return $_ if($#tags<0);
+	    $out = ($tags[0] eq $_);
+	    if($out){
+		shift @tags;
+	    }
+	}
+	if($out){
+	    print "$_\n";
+	}
+    }
+}
+	

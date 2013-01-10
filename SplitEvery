@@ -1,0 +1,52 @@
+#!/usr/bin/env perl
+#split 
+
+if ( $#ARGV <= 0 ){
+    print <<EOD;
+Usage : $0 [-p] interval \@ID1 [format [numbase]]
+EOD
+    die;
+}
+$interval=shift;
+my $preserve = 0;  #preserve existing file.
+if ( $interval eq "-p" ){
+    $preserve++;
+    $interval = shift;
+}
+$tag=shift;
+$format="%d";
+if($#ARGV>=0){
+  $format=shift;
+}
+$numbase=0;
+if($#ARGV>=0){
+  $numbase=shift;
+}
+my $max=9999999;
+if($#ARGV>=0){
+  $max=shift;
+}
+
+$cnt=0;
+open(FILE,"> /dev/null");
+
+while(<STDIN>){
+  if ( /^$tag/ ){
+    print STDERR "$cnt:$numbase\r";
+    $cnt--;
+    if($cnt<=0){
+      $cnt=$interval;
+      close(FILE);
+      my $filename=sprintf $format,$numbase++;
+      last if $numbase > $max;
+      if ( -e $filename && $preserve ){
+	  open(FILE,"> /dev/null");
+      }
+      else{
+	  open(FILE,"> $filename");
+      }
+    }
+  }
+  print FILE $_;
+}
+close(FILE);

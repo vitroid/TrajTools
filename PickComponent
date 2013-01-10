@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+#
+#多成分溶液から指定成分を抽出する。当面成分番号(0..)で指定
+#むちゃくちゃ多成分なケースはまずないので、引数に成分番号をスペース区切りでならべる。
+#
+
+import sys
+from re import *
+import math
+import string
+
+spaces=compile(" +")
+
+def spacesplit(line):
+    line = string.rstrip(line," \t\r\n")
+    columns=spaces.split(line)
+    while columns[0] == "":
+        columns.pop(0)
+    return columns
+
+compo = [False] * 10
+arg = list(sys.argv)
+arg.pop(0)
+for i in arg:
+    compo[int(i)] = True
+outcompo=0
+for i in compo:
+    if i:
+        outcompo += 1
+
+ar3a=compile("^@AR3A")
+nx4a=compile("^@NX4A")
+ncmp=compile("^@NCMP")
+incompo=1
+current=0
+while True:
+    line = sys.stdin.readline()
+    if line == "":
+        break
+    result = ncmp.search( line )
+    if result:
+        line = sys.stdin.readline()
+        incompo = int(spacesplit( line )[0])
+        current=0
+        print "@NCMP"
+        print outcompo
+    else:
+        result = ar3a.search( line ) or nx4a.search( line )
+        if result:
+            if compo[current]:
+                print line,
+            line = sys.stdin.readline()
+            if compo[current]:
+                print line,
+            nmol = int(spacesplit( line )[0])
+            for i in range(nmol):
+                line = sys.stdin.readline()
+                if compo[current]:
+                    print line,
+            current += 1
+            if current == incompo:
+                current = 0
+        else:
+            print line,
+
+        
+    
+        
+    

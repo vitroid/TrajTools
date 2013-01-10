@@ -1,0 +1,167 @@
+#!/usr/bin/env perl
+
+#既存の格子をちょっとだけ拡張する。例えば、単位格子の2x2x2倍の格子を3x3x3倍に変換したりする場合に、1.5 1.5 1.5という引数を与えればよいようにする。
+#2倍までの任意の実数に対応
+use strict;
+
+sub rint{
+  local($_)=@_;
+  if ($_>0) {
+    int($_+0.5);
+  } elsif ($_<0) {
+    #これは厳密には正しくない。許せ。
+    int($_-0.5);
+  } else {
+    0;
+  }
+}
+
+sub floor{
+  local($_)=@_;
+  #小数点以下をsubに入れる。
+  my $sub=$_;
+  $sub-=int($sub);
+  if ( $sub<0 ){
+    $sub += 1;
+  }
+  #print $_," ",$sub, "\n";
+  #$_ - $sub は整数のはず
+  return ($_ - $sub);
+}
+
+
+my @ngph;
+die "usage: $0 xratio yratio zratio\n" if $#ARGV!=2;
+my ($mulx,$muly,$mulz)=@ARGV;
+my ($bx,$by,$bz);
+while (<STDIN>) {
+  if (/\@BXLA/) {
+    my $bxl=<STDIN>;
+    $bx=$by=$bz=$bxl;
+    print "\@BOX3\n";
+    print $bx*$mulx," ",$by*$muly," ",$bz*$mulz,"\n";
+  } elsif (/\@BOX3/) {
+    print;
+    $_=<STDIN>;
+    ($bx,$by,$bz)=split;
+    print $bx*$mulx," ",$by*$muly," ",$bz*$mulz,"\n";
+  } elsif (/\@NGPH/) {
+    $_=<STDIN>;
+    while(<STDIN>){
+      chomp;
+      my ($x,$y) = split;
+      last if $x < 0;
+      push @ngph,[$x,$y];
+    }
+  } elsif (/\@NX3A/||/\@NX4A/||/\@AR3A/||/\@WTG6/) {
+    my $tag = $_;
+    my $o = "";
+    my $n=<STDIN>;
+    my $c=0;
+    my $nbx=$bx*$mulx;
+    my $nby=$by*$muly;
+    my $nbz=$bz*$mulz;
+    my @coord;
+    #my @lines;
+    for (my $i=0;$i<$n;$i++) {
+      my $line=<STDIN>;
+      #$lines[$i]=$line;
+      @_=split(/ +/,$line,9999);
+      while ($_[0] eq '') {
+	shift(@_);
+      }
+      #すべての座標を正にする。
+      $_[0]-=floor($_[0]/$bx)*$bx;
+      $_[1]-=floor($_[1]/$by)*$by;
+      $_[2]-=floor($_[2]/$bz)*$bz;
+      push @coord, [@_];
+      #print STDERR $coord[$#coord][0],"=\n";
+    }
+    for (my $i=0;$i<$n;$i++) {
+      my ($x,$y,$z,@remain) = @{$coord[$i]};
+      #print STDERR "$x $y $z\n";
+      for (my $xx=0;$xx<$mulx;$xx++) {
+	for (my $yy=0;$yy<$muly;$yy++) {
+	  for (my $zz=0;$zz<$mulz;$zz++) {
+	    my $nx=$x+$xx*$bx;
+	    my $ny=$y+$yy*$by;
+	    my $nz=$z+$zz*$bz;
+	    if (($nx<$nbx)&&($ny<$nby)&&($nz<$nbz)) {
+	      #非整数倍のときにこの条件文が必要になる。
+	      $o.=join(' ', $nx,$ny,$nz, @remain);
+	      if ($#remain<0) {
+		$o.="\n";
+	      }
+	      $c++;
+	    }
+	  }
+	}
+      }
+    }
+    if ( $#ngph >= 0 ){
+      print "\@NGPH\n$c\n";
+      my $o = "";
+      foreach my $xy ( @ngph ){
+	my ($x,$y) = @{$xy};
+	my $dx = $coord[$y][0] - $coord[$x][0];
+	my $dy = $coord[$y][1] - $coord[$x][1];
+	my $dz = $coord[$y][2] - $coord[$x][2];
+	my $xp = 0;
+	if ( $dx < -$bx*0.5 ){
+	  $xp = +1;
+	}
+	elsif ( $bx * 0.5 < $dx ){
+	  $xp = -1;
+	}
+	my $yp = 0;
+	if ( $dy < -$by*0.5 ){
+	  $yp = +1;
+	}
+	elsif ( $by * 0.5 < $dy ){
+	  $yp = -1;
+	}
+	my $zp = 0;
+	if ( $dz < -$bz*0.5 ){
+	  $zp = +1;
+	}
+	elsif ( $bz * 0.5 < $dz ){
+	  $zp = -1;
+	}
+	for (my $xx=0;$xx<$mulx;$xx++) {
+	  for (my $yy=0;$yy<$muly;$yy++) {
+	    for (my $zz=0;$zz<$mulz;$zz++) {
+	      my $destx = $xx + $xp;
+	      if ( $destx < 0 ){
+		$destx += $mulx;
+	      }
+	      if ( $mulx <= $destx ){
+		$destx -= $mulx;
+	      }
+	      my $desty = $yy + $yp;
+	      if ( $desty < 0 ){
+		$desty += $muly;
+	      }
+	      if ( $muly <= $desty ){
+		$desty -= $muly;
+	      }
+	      my $destz = $zz + $zp;
+	      if ( $destz < 0 ){
+		$destz += $mulz;
+	      }
+	      if ( $mulz <= $destz ){
+		$destz -= $mulz;
+	      }
+	      $o .= (($x*$mulx+$xx)*$muly + $yy)*$mulz + $zz .  " ";
+	      $o .= (($y*$mulx+$destx)*$muly + $desty)*$mulz + $destz . "\n";
+	    }
+	  }
+	}
+      }
+      print $o . "-1 -1\n";
+    }
+    print "$tag$c\n$o";
+  } else {
+    print;
+  }
+}
+

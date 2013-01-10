@@ -1,0 +1,76 @@
+#!/usr/bin/env perl
+#pick multiple elements
+#範囲指定ができるようにした。
+use strict;
+
+if ( $#ARGV <= 0 ){
+    print <<EOD;
+Usage : $0 which \@ID1 [\@ID2 \@ID3 ...]
+  which: 0,1,2,4,7-10,12-
+EOD
+    die;
+}
+my $ranges=shift;
+my $tag=shift;
+my @from;
+my @to;
+my $lastfrom=-1;
+my $lastto=-1;
+foreach my $range ( split(/,/,$ranges) ){
+    if($range =~ /-/){
+	my ($a,$b)=split(/-/,$range);
+	if($a !~ /^[0-9]+$/){
+	    $a=0;
+	}
+	if($b !~ /^[0-9]+$/){
+	    $b=0xffffffff;
+	}
+	die if $b<$a;
+	die if $lastto>$a;
+	$lastfrom=$a;
+	$lastto=$b;
+	push(@from,$a);
+	push(@to,$b);
+    }else{
+	push(@from,$range);
+	push(@to,$range);
+    }
+}
+my $cnt=0;
+#print STDERR join(":",@which,$lastrange);
+while(<STDIN>){
+    chop;
+    while(( $tag eq $_ )&&(($from[0]<=$cnt)&&($cnt<=$to[0]))){
+	#print STDERR "[$cnt]";
+	print "$_\n";
+	$_=&rest(@ARGV);
+	$cnt++;
+    }
+    if($tag eq $_){
+	$cnt++;
+    }
+    while($cnt>$to[0]){
+	shift(@from);
+	shift(@to);
+	exit 0 if $#to<0;
+    }
+}
+
+sub rest{
+    my(@tags)=@_;
+    my $out=1;
+    while(<STDIN>){
+	chop;
+	if(/^@/){
+	    return $_ if($#tags<0);
+	    $out = ($tags[0] eq $_);
+	    if($out){
+		shift @tags;
+	    }
+	}
+	if($out){
+	    print "$_\n";
+	}
+    }
+}
+	
