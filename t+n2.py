@@ -17,6 +17,7 @@ def rint(x):
 
 def output_yaplot(mols,edges,box):
     com = []
+    print "y 1"
     print "@ 2"
     for i in range(len(mols)):
         sx = 0
@@ -37,6 +38,7 @@ def output_yaplot(mols,edges,box):
                     labelk,xk,yk,zk,massk = mols[i][k]
                     if labelk in ("H","O"):
                         print "l",x,y,z,xk,yk,zk
+    print "y 2"
     print "@ 3"
     for edge in edges:
         i,j = edge
