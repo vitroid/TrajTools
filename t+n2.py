@@ -29,9 +29,14 @@ def output_yaplot(mols,edges,box):
             sy += y*mass
             sz += z*mass
             sm += mass
-            if label == "O":
-                print "t",x,y,z,i
         com.append((sx/sm,sy/sm,sz/sm))
+        for j in range(len(mols[i])):
+            label,x,y,z,mass = mols[i][j]
+            if label in ("H","O"):
+                for k in range(j):
+                    labelk,xk,yk,zk,massk = mols[i][k]
+                    if labelk in ("H","O"):
+                        print "l",x,y,z,xk,yk,zk
     print "@ 3"
     for edge in edges:
         i,j = edge
