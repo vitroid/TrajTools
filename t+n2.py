@@ -140,6 +140,9 @@ while True:
             line = sys.stdin.readline()
             columns = line.split()
             cx,cy,cz = map(float,columns[0:3])
+            cx -= rint(cx/box[0])*box[0]
+            cy -= rint(cy/box[1])*box[1]
+            cz -= rint(cz/box[2])*box[2]
             #last data, i-th molecule, 6 velocities
             if tag == '@WTG6':
                 rotmat = map(float,columns[3:12])
