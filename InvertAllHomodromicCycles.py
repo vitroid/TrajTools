@@ -3,7 +3,7 @@
 
 #rngsを読み込む
 #ngphを読み込む
-#それぞれのringがもしhomodromicなら、それを反転し、グラフを出力する。
+#すべてのhomodromicを同時に反転する中村専用バージョン
 #それにあわせて水分子を配置するのはwaterconfigにまかせる。
 
 
@@ -64,6 +64,36 @@ class MyDiGraph(networkx.DiGraph):
                 g.remove_edge(y,x)
                 g.add_edge(x,y)
             print g.saveNGPH()
+            return -1
+        return 0
+
+
+    def InvertIfHomodromic(self,ring):
+        t = True
+        for i in range(len(ring)):
+            node = ring[i-1]
+            if not ( ring[i] in self.neighbors(node) ):
+                t = False
+                break
+        if t:
+            for i in range(len(ring)):
+                x = ring[i-1]
+                y = ring[i]
+                self.remove_edge(x,y)
+                self.add_edge(y,x)
+            return 1
+        t = True
+        for i in range(len(ring)-1, -1, -1):
+            node = ring[i]
+            if not ( ring[i-1] in self.neighbors(node) ):
+                t = False
+                break
+        if t:
+            for i in range(len(ring)):
+                x = ring[i-1]
+                y = ring[i]
+                self.remove_edge(y,x)
+                self.add_edge(x,y)
             return -1
         return 0
         
@@ -180,12 +210,13 @@ while True:
             if columns[0] == 0:
                 break
             del columns[0]
-            rot = graph.isHomodromic(columns)
+            rot = graph.InvertIfHomodromic(columns)
             if rot > 0:
             	right += 1
             elif rot < 0:
             	left += 1
-print right,left
+#print right,left
+print graph.saveNGPH()
 
 
     
