@@ -4,6 +4,7 @@
 import sys
 from rotation import *
 import math
+import pairlist
 
 def usage():
     print "usage: %s -m|-3|-4" % sys.argv[0]
@@ -113,6 +114,7 @@ while True:
             print nmol
         #read molecular info
         mols = []
+        com = []
         for i in range(nmol):
             line = sys.stdin.readline()
             columns = line.split()
@@ -130,14 +132,23 @@ while True:
             if mode in ("-m", "-n"):
                 mol = defr[id08]
                 intra = []
+                sx = 0
+                sy = 0
+                sz = 0
+                sm = 0
                 for site in mol[0]:
                     x,y,z,mass,label = site
                     xx = cx + x*rotmat[0] + y*rotmat[1] + z*rotmat[2]
                     yy = cy + x*rotmat[3] + y*rotmat[4] + z*rotmat[5]
                     zz = cz + x*rotmat[6] + y*rotmat[7] + z*rotmat[8]
+                    sx += xx*mass
+                    sy += yy*mass
+                    sz += zz*mass
+                    sm +=    mass
                     atoms.append((label, xx,yy,zz))
                     intra.append((label, xx,yy,zz))
                 mols.append(intra)
+                com.append((sx/sm,sy/sm,sz/sm))
             elif mode == "-3":
                 euler = quat2euler(rotmat2quat(rotmat))
                 print cx,cy,cz,euler[0],euler[1],euler[2]
@@ -153,8 +164,7 @@ while True:
         if mode == "-n":
             print "@NGPH"
             print len(mols)
-            for i in range(len(mols)):
-                for j in range(i+1,len(mols)):
+            for i,j in pairlist.pairlist(com,thres+1.1,box):
                     dmin = 999999.
                     dirmin  = 0
                     for si in mols[i]:

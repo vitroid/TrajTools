@@ -10,9 +10,9 @@ def rint(x):
 
 def pairlist(xyz,rc,box):
     #divide the simulation cell into grids
-    nx = math.floor(box[0]/rc)
-    ny = math.floor(box[1]/rc)
-    nz = math.floor(box[2]/rc)
+    nx = int(math.floor(box[0]/rc))
+    ny = int(math.floor(box[1]/rc))
+    nz = int(math.floor(box[2]/rc))
     #residents in each grid cell
     residents = dict()
     for i in range(len(xyz)):
@@ -39,31 +39,31 @@ def pairlist(xyz,rc,box):
         residents[address].append(i)
     pair = []
     #key-value pairs in the dictionary
+    donecellpair = set()
     for address in residents:
         resident = residents[address]
         ix,iy,iz = address
         #neighbor cells
         for jx in range(-1,2):
             kx = ix + jx
-            if kx < 0:
-                kx += nx
+            kx %= nx
             for jy in range(-1,2):
                 ky = iy + jy
-                if ky < 0:
-                    ky += ny
+                ky %=  ny
                 for jz in range(-1,2):
                     kz = iz + jz
-                    if kz < 0:
-                        kz += nz
-                    if ( jx==0 and jy==0 and jz==0 ):
+                    kz %= nz
+                    a2 = (kx,ky,kz)
+                    if address == a2:
                         for a,b in itertools.combinations(resident,2):
                             pair.append((a,b))
                     else:
-                        print kx,ky,kz
-                        if residents.has_key((kx,ky,kz)):
-                            for a in resident:
-                                for b in residents[(kx,ky,kz)]:
-                                    pair.append((a,b))
+                        if residents.has_key(a2):
+                            if not frozenset((address,a2)) in donecellpair:
+                                donecellpair.add(frozenset((address,a2)))
+                                for a in resident:
+                                    for b in residents[a2]:
+                                        pair.append((a,b))
     return pair
 
 def test():
