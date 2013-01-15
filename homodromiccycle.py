@@ -42,13 +42,6 @@ class MyDiGraph(networkx.DiGraph):
                 t = False
                 break
         if t:
-            g = MyDiGraph(self)
-            for i in range(len(ring)):
-                x = ring[i-1]
-                y = ring[i]
-                g.remove_edge(x,y)
-                g.add_edge(y,x)
-            print g.saveNGPH()
             return 1
         t = True
         for i in range(len(ring)-1, -1, -1):
@@ -57,16 +50,20 @@ class MyDiGraph(networkx.DiGraph):
                 t = False
                 break
         if t:
-            g = MyDiGraph(self)
-            for i in range(len(ring)):
-                x = ring[i-1]
-                y = ring[i]
-                g.remove_edge(y,x)
-                g.add_edge(x,y)
-            print g.saveNGPH()
             return -1
         return 0
-        
+
+
+    def Invert(self,ring,rot):
+        for i in range(len(ring)):
+            x = ring[i-1]
+            y = ring[i]
+            if rot == +1:
+                self.remove_edge(x,y)
+                self.add_edge(y,x)
+            else:
+                self.remove_edge(y,x)
+                self.add_edge(x,y)
             
 
     def homodromiccycle(self):
@@ -152,9 +149,11 @@ class MyDiGraph(networkx.DiGraph):
         return s
             
 
-
+rings = []  #by default, null list means all
 ngphFile = open(sys.argv[1], "r")
-
+if len(sys.argv) > 2:
+    rings = sys.argv[2:]
+rings = set(map(int,rings))
 tagNGPH=compile("^@NGPH")
 graph = MyDiGraph()
 while True:
@@ -171,6 +170,7 @@ while True:
     if len(line) == 0:
         break
     columns = line.split()
+    count = 0
     if columns[0] == "@RNGS":
         nmol = sys.stdin.readline()
         while True:
@@ -181,11 +181,13 @@ while True:
                 break
             del columns[0]
             rot = graph.isHomodromic(columns)
-            if rot > 0:
-            	right += 1
-            elif rot < 0:
-            	left += 1
-print right,left
-
-
-    
+            if rot:
+                if len(rings) == 0:
+                    g = MyDiGraph(graph)
+                    g.Invert(columns,rot)
+                    print g.saveNGPH()
+                elif count in rings:
+                    graph.Invert(columns)
+                count += 1
+if len(rings):
+    print graph.saveNGPH()
