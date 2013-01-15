@@ -171,6 +171,8 @@ while True:
         break
     columns = line.split()
     count = 0
+    ringid = 0
+    inv = []
     if columns[0] == "@RNGS":
         nmol = sys.stdin.readline()
         while True:
@@ -187,7 +189,11 @@ while True:
                     g.Invert(columns,rot)
                     print g.saveNGPH()
                 elif count in rings:
-                    graph.Invert(columns)
+                    if rot == -1:
+                        columns = columns.reverse
+                    inv.append(columns)
                 count += 1
 if len(rings):
+    for ring in inv:
+        graph.Invert(columns,+1)
     print graph.saveNGPH()
