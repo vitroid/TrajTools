@@ -5,14 +5,32 @@ import sys
 from rotation import *
 import math
 import pairlist
+import itertools
+import numpy
+import numpy.linalg
 
 def usage():
     print "usage: %s -m|-3|-4" % sys.argv[0]
     print "  -m\tmdview."
+    print "  -y\tyaplot. (no bonds)"
     print "  -3\tnx3a."
     print "  -4\tnx4a."
     print "  -n x\tngph with O-H threshold of x Å."
     sys.exit(1)
+
+
+def rint(x):
+    return math.floor(x+0.5)
+
+
+
+def wrap(v,box):
+    r = numpy.zeros(3)
+    for i in range(len(v)):
+        r[i] = v[i] - rint(v[i]/box[i])*box[i]
+    return r
+
+
 
 if len(sys.argv) >= 2:
     mode = sys.argv[1]
@@ -28,6 +46,21 @@ def output_mdview(atoms):
     print len(atoms)
     for label,x,y,z in atoms:
         print label,x,y,z
+
+
+
+def output_yaplot(mols,box):
+    print "y 1"
+    print "@ 2"
+    print "r 0.1"
+    for intra in mols:
+        for a1,a2 in itertools.combinations(intra,2):
+            if a1[0] == "O" and a2[0] == "H":
+                d = a2[1] - a1[1]
+                d = wrap(d,box) + a1[1]
+                print "l",a1[1][0],a1[1][1],a1[1][2],d[0],d[1],d[2]
+    print
+
 
 
 ncmp = 1 #number of components
@@ -58,9 +91,11 @@ while True:
     elif tag in ('@BOX3',):
         line = sys.stdin.readline()
         columns = line.split()
-        box = map(float,columns[0:3])
+        box = numpy.array(map(float,columns[0:3]))
         if mode == "-m":
             print "-length '(%s, %s, %s)'" % (box[0],box[1],box[2])
+        elif mode == "-y":
+            pass
         else:
             print "@BOX3"
             print box[0],box[1],box[2]
@@ -118,7 +153,9 @@ while True:
         for i in range(nmol):
             line = sys.stdin.readline()
             columns = line.split()
-            cx,cy,cz = map(float,columns[0:3])
+            c = numpy.array(map(float,columns[0:3]))
+            if mode == "-y":
+                c = wrap(c,box)
             #last data, i-th molecule, 6 velocities
             if tag == '@WTG6':
                 rotmat = map(float,columns[3:12])
@@ -129,7 +166,7 @@ while True:
                 euler = map(float,columns[3:7])
                 quat = euler2quat(euler)
                 rotmat = quat2rotmat(quat)
-            if mode in ("-m", "-n"):
+            if mode in ("-m", "-n", "-y"):
                 mol = defr[id08]
                 intra = []
                 sx = 0
@@ -138,27 +175,33 @@ while True:
                 sm = 0
                 for site in mol[0]:
                     x,y,z,mass,label = site
-                    xx = cx + x*rotmat[0] + y*rotmat[1] + z*rotmat[2]
-                    yy = cy + x*rotmat[3] + y*rotmat[4] + z*rotmat[5]
-                    zz = cz + x*rotmat[6] + y*rotmat[7] + z*rotmat[8]
+                    xx = c[0] + x*rotmat[0] + y*rotmat[1] + z*rotmat[2]
+                    yy = c[1] + x*rotmat[3] + y*rotmat[4] + z*rotmat[5]
+                    zz = c[2] + x*rotmat[6] + y*rotmat[7] + z*rotmat[8]
                     sx += xx*mass
                     sy += yy*mass
                     sz += zz*mass
                     sm +=    mass
                     atoms.append((label, xx,yy,zz))
-                    intra.append((label, xx,yy,zz))
+                    intra.append((label, numpy.array((xx,yy,zz))))
                 mols.append(intra)
                 com.append((sx/sm,sy/sm,sz/sm))
             elif mode == "-3":
                 euler = quat2euler(rotmat2quat(rotmat))
-                print cx,cy,cz,euler[0],euler[1],euler[2]
+                print c[0],c[1],c[2],euler[0],euler[1],euler[2]
             elif mode == "-4":
                 quat = rotmat2quat(rotmat)
-                print cx,cy,cz,quat[0],quat[1],quat[2],quat[3]
+                print c[0],c[1],c[2],quat[0],quat[1],quat[2],quat[3]
         if mode == "-m":
             icmp += 1
             if icmp == ncmp:
                 output_mdview(atoms)
+                icmp = 0
+                atoms = []
+        if mode == "-y":
+            icmp += 1
+            if icmp == ncmp:
+                output_yaplot(mols,box)
                 icmp = 0
                 atoms = []
         if mode == "-n":
@@ -174,13 +217,9 @@ while True:
                             if si[0][0] == "H" and sj[0][0] == "O":
                                 dir = +1
                             if (si[0][0] == "O" and sj[0][0] == "H") or (si[0][0] == "H" and sj[0][0] == "O"):
-                                dx = si[1]-sj[1]
-                                dy = si[2]-sj[2]
-                                dz = si[3]-sj[3]
-                                dx -= math.floor(dx / box[0]+0.5)*box[0]
-                                dy -= math.floor(dy / box[1]+0.5)*box[1]
-                                dz -= math.floor(dz / box[2]+0.5)*box[2]
-                                d = sqrt(dx**2+dy**2+dz**2)
+                                d = si[1]-sj[1]
+                                d = wrap(d,box)
+                                d = numpy.linalg.norm(d)
                                 if d < dmin:
                                     dmin = d
                                     dirmin = dir

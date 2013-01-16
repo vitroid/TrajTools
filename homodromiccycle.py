@@ -190,10 +190,10 @@ while True:
                     print g.saveNGPH()
                 elif count in rings:
                     if rot == -1:
-                        columns = columns.reverse
+                        columns.reverse()
                     inv.append(columns)
                 count += 1
 if len(rings):
     for ring in inv:
-        graph.Invert(columns,+1)
+        graph.Invert(ring,+1)
     print graph.saveNGPH()
