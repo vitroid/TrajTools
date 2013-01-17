@@ -66,42 +66,40 @@ def ohvectors2quat(oh1,oh2):
 
 import sys
 
-atoms = dict()
+mols = dict()
 nei = dict()
 
 for line in sys.stdin:
     columns = line.split()
-    if columns[0] == 'HETATM':
+    if columns[0] in ('ATOM',):
         label = columns[1]
+        name = columns[2]
         #last 3 numbers are coordinates
         xyz = numpy.array(map(float,columns[len(columns)-3:len(columns)]))
-        atoms[label] = xyz
-    elif columns[0] == "CONECT":
-        i = columns[1]
-        for j in columns[2:len(columns)]:
-            if not nei.has_key(i):
-                nei[i] = []
-            nei[i].append(j)
+        if not mols.has_key(label):
+            mols[label] = dict()
+        mols[label][name] = xyz
+    elif columns[0] in ('CRTST1',):
+        print "@BOX3"
+        print columns[1],columns[2],columns[3]
 
 print "@NX4A"
-print len(atoms)/3
-for n in nei:
-    if len(nei[n]) == 2: #oxygen
-        i,j,k = n, nei[n][0], nei[n][1]
-        oh1 = atoms[j] - atoms[i]
-        oh2 = atoms[k] - atoms[i]
-        k = oh1+oh2
-        k /= norm(k)
-        j = oh2-oh1
-        j /= norm(j)
-        i = numpy.cross(j,k)
-        mat = numpy.matrix((i,j,k)).T
-        quat = ohvectors2quat(atoms[j] - atoms[i], atoms[k] - atoms[i])
-        quat2 = rotation.rotmat2quat_numpy(mat)
-        print quat,quat2
-        #print atoms[j] - atoms[i], atoms[k] - atoms[i], quat
-        for i in atoms[i]:
-            print i,
-        for i in quat:
-            print i,
-        print
+print len(mols)
+for label in mols:
+    mol = mols[label]
+    o,h1,h2 = mol["O"], mol["H1"], mol["H2"]
+    com = (16*o+h1+h2)/18
+    oh1 = h1 - o
+    oh2 = h2 - o
+    k = oh1+oh2
+    k /= norm(k)
+    j = oh2-oh1
+    j /= norm(j)
+    i = numpy.cross(j,k)
+    quat2 = rotation_numpy.rotmat2quat(i,j,k)
+    #print atoms[j] - atoms[i], atoms[k] - atoms[i], quat
+    for i in com:
+        print i,
+    for i in quat2:
+        print i,
+    print

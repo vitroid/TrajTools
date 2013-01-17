@@ -28,23 +28,20 @@ def decide2(v1,v2):
 #outer product of two vectors; return None if vector is too small
 def op(i,j,check=True):
     if check and (numpy.linalg.norm(i) < 0.1 or numpy.linalg.norm(j) < 0.1):
-        return None
+        return numpy.array([])
     a = numpy.cross(i,j)
     if check and numpy.linalg.norm(a) < 0.1:
-        return None
+        return numpy.array([])
     return a
 
 
 
 #calculate quaternions from a rotation matrix (three orthogonal vectors)
-def rotmat2quat(mat):
-	i = mat[:,0]
-	j = mat[:,1]
-	k = mat[:,2]
+def rotmat2quat(i,j,k):
     #print sqlen(i),sqlen(j),sqlen(k)
-    ex = (1.0, 0.0, 0.0)
-    ey = (0.0, 1.0, 0.0)
-    ez = (0.0, 0.0, 1.0)
+    ex = numpy.array((1.0, 0.0, 0.0))
+    ey = numpy.array((0.0, 1.0, 0.0))
+    ez = numpy.array((0.0, 0.0, 1.0))
     
     # i軸をx軸に移す回転の軸は、iとxの2分面上にある。
     # j軸をy軸に移す回転の軸は、jとyの2分面上にある。
@@ -52,11 +49,11 @@ def rotmat2quat(mat):
     # 交線は、2つの面の法線のいずれとも直交する=外積である。*/
     
     a = op(i-ex, j-ey)
-    if not a:
+    if a.size == 0:
         a = op(i-ex, k-ez)
-        if not a:
+        if a.size == 0:
             a = op(k-ez, j-ey)
-            if not a:
+            if a.size == 0:
                 sys.stderr.write("outer prod warning\n")
                 #//全く回転しないケース
                 return 1.0, 0.0, 0.0, 0.0
@@ -71,7 +68,7 @@ def rotmat2quat(mat):
 
     i0 /= numpy.linalg.norm(i0)
     x0 /= numpy.linalg.norm(x0)
-    cosine = ip(i0,x0)
+    cosine = numpy.dot(i0,x0)
     if cosine < -1.0 or cosine > 1.0:
         cosh = 0.0
         sinh = 1.0
@@ -81,10 +78,10 @@ def rotmat2quat(mat):
     #//fprintf(stderr,"sinh %24.17e %24.17e %24.17e\n",cosine,cosh,sinh);
     #/*outer product to determine direction*/
     o = op(i0,x0,False)
-    if ip(o,a) < 0.0:
+    if numpy.dot(o,a) < 0.0:
         sinh=-sinh;
     
-    return cosh, -sinh*a[0], +sinh*a[1], -sinh*a[2]
+    return numpy.array((cosh, -sinh*a[0], +sinh*a[1], -sinh*a[2]))
 
 
 

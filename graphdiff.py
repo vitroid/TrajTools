@@ -31,13 +31,17 @@ if  n1 != n2:
     sys.exit(1)
 print "@DGPH"
 print n1
-for edge in e1|e2:
+for edge in e1&e2:
     x,y = edge
-    if edge in e1:
-        if edge in e2:
-            print x,y,"="
-        else:
-            print x,y,"<"
+    print x,y,"="
+for edge in e1 - e2:
+    x,y = edge
+    if (y,x) in e2:
+        print x,y,"x"
     else:
+        print x,y,"<"
+for edge in e2 - e1:
+    x,y = edge
+    if not (y,x) in e1:
         print x,y,">"
-print -1,-1,"x"
+print -1,-1,0
