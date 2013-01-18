@@ -93,12 +93,15 @@ def output_yaplot(mols,edges,box):
 
 def output_bondangles(com,edges,box):
     nei = [set() for i in range(len(com))]
+    dir = dict()
     for edge in edges:
         i,j = edge
+        dir((i,j) = +1
+        dir((j,i) = -1
         nei[i].add(j)
         nei[j].add(i)
     print "@VALU"
-    print len(nei),4
+    print len(nei),6
     for i in range(len(nei)):
         for j,k in itertools.combinations(nei[i],2):
             v1 = com[j] - com[i]
@@ -107,8 +110,8 @@ def output_bondangles(com,edges,box):
             v2 = com[k] - com[i]
             v2 = wrap(v2,box)
             v2 /= numpy.linalg.norm(v2)
-            print i,j,k,"%6.1f" % (math.acos(numpy.dot(v1,v2))*180./math.pi)
-    print -1,-1,-1,0
+            print i,j,k,"%6.1f" % (math.acos(numpy.dot(v1,v2))*180./math.pi),dir[(i,j)],dir[(i,k)]
+    print -1,-1,-1,0,0,0
 
 mode = "-y"
 if sys.argv[1] == "-b":
