@@ -62,6 +62,6 @@ while(<STDIN>){
 	}
     }
     else{
-	print;
+	print $_;
     }
 }

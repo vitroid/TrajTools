@@ -19,7 +19,8 @@ while True:
                 vmrk.append(columns[0])
                 while columns[0] >= len(component):
                     component.append([])
-        elif columns[0] == "@NX4A":
+        elif columns[0] in ("@NX4A","@AR3A"):
+            tag = columns[0]
             line = sys.stdin.readline()
             for i in range(nmol):
                 line = sys.stdin.readline()
@@ -31,7 +32,7 @@ print "@NCMP"
 print len(component)
 for i in range(len(component)):
     compo = component[i]
-    print "@NX4A"
+    print tag
     print len(compo)
     for xyz in compo:
         for i in xyz:
