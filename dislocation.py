@@ -38,8 +38,19 @@ def loadNX4A(file):
                 box = numpy.array(map(float,line.split()))
     return box,xyz
 
-basebox,basexyz = loadNX4A(open(sys.argv[1],"r"))
+def usage():
+    print "usage: %s [-r distance] lattice.nx4a < dislocated.nx4a" % sys.argv[0]
+    sys.exit(1)
+
+argc = len(sys.argv)
+basebox,basexyz = loadNX4A(open(sys.argv[argc-1],"r"))
 rc = 1.0
+if argc > 2:
+    if sys.argv[1] == "-r":
+        rc = float(sys.argv[2])
+    else:
+        usage()
+
 nx = int(math.floor(basebox[0]/rc))
 ny = int(math.floor(basebox[1]/rc))
 nz = int(math.floor(basebox[2]/rc))
@@ -58,7 +69,7 @@ for addr in residents:
             xn = basexyz[n]
             d = xm[0:3] - xn[0:3]
             d = wrap(d,box)
-            if numpy.linalg.norm(d) < 1.0:
+            if numpy.linalg.norm(d) < rc:
                 vmrk[m] = 1
         
 print "@VMRK"

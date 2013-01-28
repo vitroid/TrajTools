@@ -8,11 +8,11 @@ import itertools
 def rint(x):
     return math.floor(x+0.5)
 
-def pairlist(xyz,rc,box):
+
+
+def ArrangeAddress(xyz,grid,box):
     #divide the simulation cell into grids
-    nx = int(math.floor(box[0]/rc))
-    ny = int(math.floor(box[1]/rc))
-    nz = int(math.floor(box[2]/rc))
+    nx,ny,nz = grid
     #residents in each grid cell
     residents = dict()
     for i in range(len(xyz)):
@@ -37,6 +37,38 @@ def pairlist(xyz,rc,box):
         if not residents.has_key(address):
             residents[address] = []
         residents[address].append(i)
+    return residents
+
+
+#return labels of the molecules near the given grid cell.
+def neighbors(address,residents,grid):
+    ix,iy,iz = address
+    nx,ny,nz = grid
+    #neighbor cells
+    nei = []
+    for jx in range(-1,2):
+        kx = ix + jx
+        kx %= nx
+        for jy in range(-1,2):
+            ky = iy + jy
+            ky %=  ny
+            for jz in range(-1,2):
+                kz = iz + jz
+                kz %= nz
+                a2 = (kx,ky,kz)
+                if residents.has_key(a2):
+                    nei += residents[a2]
+    return nei
+    
+
+def pairlist(xyz,rc,box):
+    #residents in each grid cell
+    nx = int(math.floor(box[0]/rc))
+    ny = int(math.floor(box[1]/rc))
+    nz = int(math.floor(box[2]/rc))
+    grid = (nx,ny,nz)
+    residents = ArrangeAddress(xyz,grid,box)
+    
     pair = []
     #key-value pairs in the dictionary
     donecellpair = set()
