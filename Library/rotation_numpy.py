@@ -5,7 +5,7 @@ import sys
 import numpy
 import numpy.linalg
 
-#should be rewritten with numpy
+#rewritten with numpy
 
 
 #v1,v2,v3: numpy arrays
@@ -37,7 +37,7 @@ def op(i,j,check=True):
 
 
 #calculate quaternions from a rotation matrix (three orthogonal vectors)
-def rotmat2quat(i,j,k):
+def rotmat2quat0(i,j,k):
     #print sqlen(i),sqlen(j),sqlen(k)
     ex = numpy.array((1.0, 0.0, 0.0))
     ey = numpy.array((0.0, 1.0, 0.0))
@@ -58,7 +58,6 @@ def rotmat2quat(i,j,k):
                 #//全く回転しないケース
                 return 1.0, 0.0, 0.0, 0.0
     a /= numpy.linalg.norm(a)
-    
     #/*回転軸aが求まったので、x軸をi軸に重ねる回転の大きさを求める。。*/
     x0 = ex - a[0]*a
     i0 = i  - a[0]*a
@@ -68,7 +67,7 @@ def rotmat2quat(i,j,k):
 
     i0 /= numpy.linalg.norm(i0)
     x0 /= numpy.linalg.norm(x0)
-    cosine = numpy.dot(i0,x0)
+    cosine = numpy.dot(i0,x0.transpose())
     if cosine < -1.0 or cosine > 1.0:
         cosh = 0.0
         sinh = 1.0
@@ -78,11 +77,19 @@ def rotmat2quat(i,j,k):
     #//fprintf(stderr,"sinh %24.17e %24.17e %24.17e\n",cosine,cosh,sinh);
     #/*outer product to determine direction*/
     o = op(i0,x0,False)
+    a = a.transpose()
     if numpy.dot(o,a) < 0.0:
         sinh=-sinh;
     
     return numpy.array((cosh, -sinh*a[0], +sinh*a[1], -sinh*a[2]))
 
+
+
+def rotmat2quat(m):
+    print "rotmat2quat is not reliable yet."
+    sys.exit(1)
+    n = m.transpose()
+    return rotmat2quat0(numpy.array(n[0]),numpy.array(n[1]),numpy.array(n[2]))
 
 
 def quat2rotmat(q):
@@ -149,9 +156,50 @@ def quat2euler(q):
     return e
 
 
+def qadd(q1,q2):
+    a1,b1,c1,d1 = q1
+    a2,b2,c2,d2 = q2
+    a3=a1*a2-b1*b2-c1*c2-d1*d2
+    b3=a1*b2+b1*a2+c1*d2-d1*c2
+    c3=a1*c2+c1*a2-b1*d2+d1*b2
+    d3=a1*d2+d1*a2+b1*c2-c1*b2
+    if a3 < 0:
+       a3 = -a3
+       b3 = -b3
+       c3 = -c3
+       d3 = -d3
+    return numpy.array([a3,b3,c3,d3])
+
+
+
+def qmul(q,x):
+    if q[0] >= 1.0:
+        return numpy.array(q)
+    phi = acos(q[0])
+    sine = sqrt(1.0-q[0]**2)
+    if q[1] < 0:
+        phi=-phi
+        sine=-sine
+    phi *= x
+    sine = sin(phi) / sine
+    a = numpy.zeros(4)
+    a[0] = cos(phi)
+    a[1] = q[1]*sine
+    a[2] = q[2]*sine
+    a[3] = q[3]*sine
+    return a
+
+
 def test_rotation():
     e = (0.2,0.3,0.4)
     print e
     print quat2euler(euler2quat(e))
     print euler2quat(e)
     print rotmat2quat(quat2rotmat(euler2quat(e)))
+    q = euler2quat(e)
+    q = qmul(q, 0.5)
+    print qadd(q,q)
+
+
+    
+#test_rotation()

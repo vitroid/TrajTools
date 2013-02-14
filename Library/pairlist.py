@@ -4,7 +4,6 @@
 import math
 import itertools
 
-
 def rint(x):
     return math.floor(x+0.5)
 

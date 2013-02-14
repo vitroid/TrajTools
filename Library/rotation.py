@@ -182,6 +182,7 @@ def qadd(q1,q2):
     return (a3,b3,c3,d3)
 
 
+
 def test_rotation():
     e = (0.2,0.3,0.4)
     print e

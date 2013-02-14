@@ -7,8 +7,6 @@
 #それにあわせて水分子を配置するのはwaterconfigにまかせる。
 
 
-#input: coordinate of the nodes, the digraph obeying the ice rule.
-#output: the digraph with zero net dipole.
 
 import sys
 from re import *

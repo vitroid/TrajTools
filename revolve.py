@@ -39,3 +39,15 @@ while True:
             x,y,z,a,b,c,d = map(float,columns[0:7])
             a,b,c,d = rotation.qadd((a,b,c,d),rot)
             print y,z,x,a,b,c,d
+    elif columns[0] =="@AR3A":
+        print columns[0]
+        line = sys.stdin.readline()
+        nmol = int(line)
+        print nmol
+        for i in range(nmol):
+            line = sys.stdin.readline()
+            columns = line.split()
+            x,y,z = map(float,columns[0:3])
+            print y,z,x
+    else:
+        print line,
