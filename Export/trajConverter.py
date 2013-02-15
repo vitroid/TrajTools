@@ -13,6 +13,7 @@ def usage():
     print "usage: %s -m|-3|-4" % sys.argv[0]
     print "  -m\tmdview."
     print "  -y\tyaplot. (no bonds)"
+    print "  -p\tpovray. (no bonds)"
     print "  -3\tnx3a."
     print "  -4\tnx4a."
     print "  -n x\tngph with O-H threshold of x Å."
@@ -63,6 +64,22 @@ def output_yaplot(mols,box):
 
 
 
+def output_povray(mols,box):
+    print "y 1"
+    print "@ 2"
+    print "r 0.1"
+    for intra in mols:
+        for a1,a2 in itertools.combinations(intra,2):
+            if a1[0] == "O" and a2[0] == "H":
+                d = a2[1] - a1[1]
+                d = wrap(d,box) + a1[1]
+                print "cylinder {<%s,%s,%s>,<%s,%s,%s> ROH open texture {TEXOH}}" % (a1[1][0],a1[1][1],a1[1][2],d[0],d[1],d[2])
+        for a in intra:
+            print "sphere {<%s,%s,%s> R%s texture {TEX%s}}" % (a[1][0],a[1][1],a[1][2],a[0],a[0])
+    print "//endofframe"
+
+
+
 ncmp = 1 #number of components
 icmp = 0
 defr = dict()
@@ -94,7 +111,7 @@ while True:
         box = numpy.array(map(float,columns[0:3]))
         if mode == "-m":
             print "-length '(%s, %s, %s)'" % (box[0],box[1],box[2])
-        elif mode == "-y":
+        elif mode in ("-y","-p"):
             pass
         else:
             print "@BOX3"
@@ -154,7 +171,7 @@ while True:
             line = sys.stdin.readline()
             columns = line.split()
             c = numpy.array(map(float,columns[0:3]))
-            if mode == "-y":
+            if mode in ("-y","-p"):
                 c = wrap(c,box)
             #last data, i-th molecule, 6 velocities
             if tag == '@WTG6':
@@ -166,7 +183,7 @@ while True:
                 euler = map(float,columns[3:7])
                 quat = euler2quat(euler)
                 rotmat = quat2rotmat(quat)
-            if mode in ("-m", "-n", "-y"):
+            if mode in ("-m", "-n", "-y", "-p"):
                 mol = defr[id08]
                 intra = []
                 sx = 0
@@ -198,10 +215,16 @@ while True:
                 output_mdview(atoms)
                 icmp = 0
                 atoms = []
-        if mode == "-y":
+        if mode in ("-y",):
             icmp += 1
             if icmp == ncmp:
                 output_yaplot(mols,box)
+                icmp = 0
+                atoms = []
+        if mode in ("-p",):
+            icmp += 1
+            if icmp == ncmp:
+                output_povray(mols,box)
                 icmp = 0
                 atoms = []
         if mode == "-n":
