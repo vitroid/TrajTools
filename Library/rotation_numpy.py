@@ -202,4 +202,18 @@ def test_rotation():
 
 
     
-#test_rotation()
+
+def test():
+    """Testing Docstring"""
+    pass
+
+if __name__=='__main__':
+    q1 = numpy.array([0.5,0.5,0.5,0.5]);
+    q2 = numpy.array([0.5,0.5,0.5,-0.5]);
+    q21 = qadd(q2,qmul(q1,-1))
+    print q21
+    print qadd(q21,q1)
+    q3 = numpy.array([0.60876143, -0.45804276,  0.45804276, -0.45804276])
+    print qadd(q3,q1)
+    print qadd(q1,q3)
+    

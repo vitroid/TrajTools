@@ -76,8 +76,7 @@ while True:
                     lastori = stack[len(stack)-2][compo][i][1]
                     dcom = wrap(com - lastcom, box)
                     #negative rotation
-                    n = - lastori
-                    n[0] = - n[0]
+                    n = rotation_numpy.qmul(lastori,-1)
                     dori = rotation_numpy.qadd(ori, n)
                     #print dori
                     dcom /= width
@@ -142,10 +141,10 @@ while True:
                             for j in range(len(deltastack)):
                                 #print i,deltastack[j][i],o
                                 weight = len(deltastack)-j
-                                #print weight
                                 c += deltastack[j][compo][i][0]*weight
                                 q = rotation_numpy.qmul(deltastack[j][compo][i][1], weight)
-                                o = rotation_numpy.qadd(o, q)
+                                o = rotation_numpy.qadd(q,o)
+                                #print weight,deltastack[j][compo][i][1],q,o
                             print c[0],c[1],c[2],o[0],o[1],o[2],o[3]
                     elif tags[compo] == "@AR3A":
                         for i in range(nmol):
