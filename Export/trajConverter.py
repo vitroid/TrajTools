@@ -63,8 +63,35 @@ def output_yaplot(mols,box):
     print
 
 
+def HBpairs(mols,com,thres,box):
+    pairs = []
+    for i,j in pairlist.pairlist(com,thres+1.1,box):
+        dmin = 999999.
+        dirmin  = 0
+        mins = -1
+        for si in mols[i]:
+            for sj in mols[j]:
+                if si[0][0] == "O" and sj[0][0] == "H":
+                    dir = -1
+                if si[0][0] == "H" and sj[0][0] == "O":
+                    dir = +1
+                if (si[0][0] == "O" and sj[0][0] == "H") or (si[0][0] == "H" and sj[0][0] == "O"):
+                    d = si[1]-sj[1]
+                    d = wrap(d,box)
+                    d = numpy.linalg.norm(d)
+                    if d < dmin:
+                        dmin = d
+                        dirmin = dir
+        if dmin < thres:
+            if dirmin > 0:
+                pairs.append((i,j))
+            else:
+                pairs.append((j,i))
+    return pairs
 
-def output_povray(mols,box):
+
+
+def output_povray(mols,box,hbpairs):
     for intra in mols:
         for a1,a2 in itertools.combinations(intra,2):
             if a1[0] == "O" and a2[0] == "H":
@@ -73,6 +100,23 @@ def output_povray(mols,box):
                 print "cylinder {<%s,%s,%s>,<%s,%s,%s> ROH open texture {TEXOH}}" % (a1[1][0],a1[1][1],a1[1][2],d[0],d[1],d[2])
         for a in intra:
             print "sphere {<%s,%s,%s> R%s texture {TEX%s}}" % (a[1][0],a[1][1],a[1][2],a[0],a[0])
+    for i,j in hbpairs:
+        for a2 in mols[j]:
+            if a2[0] == "O":
+                break
+        d0 = None
+        for a1 in mols[i]:
+            if a1[0] == "H":
+                d = a2[1] - a1[1]
+                d = wrap(d,box)
+                L = numpy.linalg.norm(d)
+                if d0 == None:
+                    d0 = d
+                else:
+                    if L < numpy.linalg.norm(d0):
+                        d0 = d
+        d0 += a1[1]
+        print "cylinder {<%s,%s,%s>,<%s,%s,%s> RHB open texture {TEXHB}}" % (a1[1][0],a1[1][1],a1[1][2],d0[0],d0[1],d0[2])
     print "//endofframe"
 
 
@@ -215,39 +259,22 @@ while True:
         if mode in ("-y",):
             icmp += 1
             if icmp == ncmp:
-                output_yaplot(mols,box)
+                pairs = HBpairs(mols,com,thres,box)
+                output_yaplot(mols,box,pairs)
                 icmp = 0
                 atoms = []
         if mode in ("-p",):
             icmp += 1
             if icmp == ncmp:
-                output_povray(mols,box)
+                pairs = HBpairs(mols,com,thres,box)
+                output_povray(mols,box,pairs)
                 icmp = 0
                 atoms = []
         if mode == "-n":
             print "@NGPH"
             print len(mols)
-            for i,j in pairlist.pairlist(com,thres+1.1,box):
-                    dmin = 999999.
-                    dirmin  = 0
-                    for si in mols[i]:
-                        for sj in mols[j]:
-                            if si[0][0] == "O" and sj[0][0] == "H":
-                                dir = -1
-                            if si[0][0] == "H" and sj[0][0] == "O":
-                                dir = +1
-                            if (si[0][0] == "O" and sj[0][0] == "H") or (si[0][0] == "H" and sj[0][0] == "O"):
-                                d = si[1]-sj[1]
-                                d = wrap(d,box)
-                                d = numpy.linalg.norm(d)
-                                if d < dmin:
-                                    dmin = d
-                                    dirmin = dir
-                    if dmin < thres:
-                        if dirmin > 0:
-                            print i,j
-                        else:
-                            print j,i
+            for i,j in HBpairs(mols,com,thres,box):
+                print i,j
             print -1,-1
     elif tag in  ('@AR3A',):
         #get the first line == number of molecules
