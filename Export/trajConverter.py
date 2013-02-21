@@ -65,9 +65,6 @@ def output_yaplot(mols,box):
 
 
 def output_povray(mols,box):
-    print "y 1"
-    print "@ 2"
-    print "r 0.1"
     for intra in mols:
         for a1,a2 in itertools.combinations(intra,2):
             if a1[0] == "O" and a2[0] == "H":
