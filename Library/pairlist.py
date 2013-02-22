@@ -66,7 +66,9 @@ def pairlist(xyz,rc,box):
     ny = int(math.floor(box[1]/rc))
     nz = int(math.floor(box[2]/rc))
     grid = (nx,ny,nz)
+    #print "START Arrange"
     residents = ArrangeAddress(xyz,grid,box)
+    #print "END Arrange"
     
     pair = []
     #key-value pairs in the dictionary
@@ -86,15 +88,18 @@ def pairlist(xyz,rc,box):
                     kz %= nz
                     a2 = (kx,ky,kz)
                     if address == a2:
+                        #print "ISOCELL",a2
                         for a,b in itertools.combinations(resident,2):
                             pair.append((a,b))
                     else:
                         if residents.has_key(a2):
                             if not frozenset((address,a2)) in donecellpair:
                                 donecellpair.add(frozenset((address,a2)))
+                                #print "HETEROCELL",address,a2
                                 for a in resident:
                                     for b in residents[a2]:
                                         pair.append((a,b))
+    #print "PAIRLIST finished"
     return pair
 
 def test():

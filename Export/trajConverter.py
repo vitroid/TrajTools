@@ -37,7 +37,7 @@ if len(sys.argv) >= 2:
     mode = sys.argv[1]
 else:
     usage()
-if mode == "-n":
+if mode in ("-n","-y","-p"):
     thres = float(sys.argv[2])
 
 
@@ -70,12 +70,17 @@ def HBpairs(mols,com,thres,box):
         dirmin  = 0
         mins = -1
         for si in mols[i]:
+            if not si[0][0] in ("O","H"):
+                next
             for sj in mols[j]:
+                if not sj[0][0] in ("O","H"):
+                    next
+                dir = 0
                 if si[0][0] == "O" and sj[0][0] == "H":
                     dir = -1
                 if si[0][0] == "H" and sj[0][0] == "O":
                     dir = +1
-                if (si[0][0] == "O" and sj[0][0] == "H") or (si[0][0] == "H" and sj[0][0] == "O"):
+                if dir != 0:
                     d = si[1]-sj[1]
                     d = wrap(d,box)
                     d = numpy.linalg.norm(d)
@@ -107,7 +112,7 @@ def output_povray(mols,box,hbpairs):
         d0 = None
         for a1 in mols[i]:
             if a1[0] == "H":
-                d = a2[1] - a1[1]
+                d = a1[1] - a2[1]
                 d = wrap(d,box)
                 L = numpy.linalg.norm(d)
                 if d0 == None:
@@ -115,8 +120,8 @@ def output_povray(mols,box,hbpairs):
                 else:
                     if L < numpy.linalg.norm(d0):
                         d0 = d
-        d0 += a1[1]
-        print "cylinder {<%s,%s,%s>,<%s,%s,%s> RHB open texture {TEXHB}}" % (a1[1][0],a1[1][1],a1[1][2],d0[0],d0[1],d0[2])
+        d0 += a2[1]
+        print "cylinder {<%s,%s,%s>,<%s,%s,%s> RHB open texture {TEXHB}}" % (a2[1][0],a2[1][1],a2[1][2],d0[0],d0[1],d0[2])
     print "//endofframe"
 
 
