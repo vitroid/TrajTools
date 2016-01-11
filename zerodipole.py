@@ -4,18 +4,9 @@
 #output: the digraph with zero net dipole.
 
 import sys
-from re import *
 import math
 import string
 
-spaces=compile(" +")
-
-def spacesplit(line):
-    line = string.rstrip(line," \t\r\n")
-    columns=spaces.split(line)
-    while columns[0] == "":
-        columns.pop(0)
-    return columns
 
 import networkx
 import random
@@ -29,7 +20,7 @@ class MyDiGraph(networkx.DiGraph):
             self.add_node(i)
         while True:
             line = filehandle.readline()
-            (x,y) = map(int, spacesplit(line))
+            (x,y) = [int(v) for v in line.split()]
             if x < 0:
                 break
             self.add_edge(x,y)
@@ -66,16 +57,21 @@ class MyDiGraph(networkx.DiGraph):
             s += "%d %d\n" % (i,j)
         s += "-1 -1\n"
         return s
-            
+
+
+#v is an numpy.array
+def box9wrap(v,box9):
+    r = numpy.dot(box9.I, numpy.matrix(v).T)
+    for k in range(3):
+        r[k,0] -= math.floor(r[k,0]+0.5)
+    a = numpy.dot(box9, r)
+    return numpy.array((a[0,0],a[1,0],a[2,0]))
 
 
 import numpy
-       
+
 if len(sys.argv)>1:
     random.seed(int(sys.argv[1]))
-tagBOX3=compile("^@BOX3")
-tagAR3A=compile("^@(AR3A|NX4A)")
-tagNGPH=compile("^@NGPH")
 box=[]
 coord = []
 graph = MyDiGraph()
@@ -83,28 +79,48 @@ while True:
     line = sys.stdin.readline()
     if line == "":
         break
-    result = tagBOX3.search( line )
-    if result:
+    columns = line.split()
+    if len(columns) < 1:
+        continue
+    if columns[0] == "@BOX3":
         line = sys.stdin.readline()
-        box = map(float, spacesplit(line))
-    result = tagAR3A.search( line )
-    if result:
+        a,b,c = [float(x) for x in line.split()]
+        a = numpy.array((a,0,0))
+        b = numpy.array((0,b,0))
+        c = numpy.array((0,0,c))
+        box9 = numpy.matrix((a,b,c)).T
+    elif columns[0] == "@BOX9":
+        line = sys.stdin.readline()
+        a = numpy.array([float(x) for x in line.split()])
+        line = sys.stdin.readline()
+        b = numpy.array([float(x) for x in line.split()])
+        line = sys.stdin.readline()
+        c = numpy.array([float(x) for x in line.split()])
+        box9 = numpy.matrix((a,b,c)).T
+    elif columns[0] == "@AR3A":
         line = sys.stdin.readline()
         nmol = int(line)
         for i in range(nmol):
             line = sys.stdin.readline()
-            c = map(float, spacesplit(line))
-            coord.append(c[0:3])
-    result = tagNGPH.search( line )
-    if result:
+            c = [float(x) for x in line.split()]
+            coord.append(numpy.array(c[0:3]))
+    elif columns[0] == "@AR3R":
+        line = sys.stdin.readline()
+        nmol = int(line)
+        for i in range(nmol):
+            line = sys.stdin.readline()
+            c = [float(x) for x in line.split()]
+            c = numpy.matrix(c).T
+            c = numpy.dot(box9,c)
+            coord.append(numpy.array((c[0,0],c[1,0],c[2,0])))
+    elif columns[0] == "@NGPH":
         graph.loadNGPH(sys.stdin)
     if graph.number_of_nodes() > 0 and len(coord) > 0:
         dipole = numpy.zeros(3)
         for i,j,k in graph.edges_iter(data=True):
-            vec = numpy.zeros(3)
-            for dim in range(0,3):
-                vec[dim] = coord[j][dim] - coord[i][dim]
-                vec[dim] -= math.floor(vec[dim]/box[dim] + 0.5) * box[dim]
+            #print coord[j],coord[i]
+            vec = coord[j] - coord[i]
+            vec = box9wrap(vec,box9)
             dipole += vec
             #add the direction vector as an attribute of the edge
             k["vector"] = vec
